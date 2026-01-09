@@ -7,18 +7,18 @@
 - Async: **SQS** (publish/consume via **Workers**) — 3 filas / 3 workers
 - Orquestração e escala: **Kubernetes + HPA (metrics-server)**
 - Observabilidade:
-  - **Logs**: Fluent Bit → **OpenSearch (in-cluster)** + **CloudWatch Logs**
-  - **Tracing**: OpenTelemetry → ADOT Collector → **AWS X-Ray**
+  - **Logs**: Fluent Bit → **OpenSearch (in-cluster)** + **CloudWatch Logs** (pendente fix)
+  - **Tracing**: OpenTelemetry → ADOT Collector → **AWS X-Ray** (pendente fix)
 
 ---
 
-## 2) Arquitetura no Kubernetes (visão geral)
+## 2) Arquitetura no Kubernetes
 
 ![Arquitetura Kubernetes (EKS) - PNG](diagramas/fcg-k8s-architecture.drawio.png)
 
 ---
 
-## 3) Kubernetes + HPA (onde está a escala)
+## 3) Kubernetes + HPA
 
 - Deployments separados por contexto:
   - **users-api / users-worker**
@@ -29,7 +29,7 @@
 
 ---
 
-## 4) Comunicação assíncrona (SQS) — visão alto nível
+## 4) Comunicação assíncrona (SQS)
 
 - APIs publicam eventos via **Outbox**
 - Workers fazem **polling/consume/delete** no SQS
@@ -65,7 +65,7 @@
 
 ---
 
-## 8) Demo (fluxo rápido)
+## 8) Demo
 
 1. Health via API Gateway: `/users/health`, `/games/health`, `/payments/health`
 2. Login → obter JWT
