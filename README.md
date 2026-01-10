@@ -51,7 +51,7 @@
 
 - Exemplo de operação administrativa orientada a eventos (mesmo padrão: API → Outbox → SQS → Worker)
 
-![Admin Create Game via Queue](diagramas/admin-create-game-queue.png)
+![Admin Create Game via Queue](diagramas/admin-create-game-queue.svg)
 
 ---
 

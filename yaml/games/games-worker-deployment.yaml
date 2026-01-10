@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: games-worker
+  namespace: fcg
+  labels:
+    app: games-worker
+    app.kubernetes.io/name: games-worker
+    app.kubernetes.io/part-of: fcg
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: games-worker
+  template:
+    metadata:
+      labels:
+        app: games-worker
+        app.kubernetes.io/name: games-worker
+    spec:
+      serviceAccountName: games-worker-sa
+      volumes:
+        - name: appsettings
+          secret:
+            secretName: games-appsettings
+            items:
+              - key: appsettings.Production.json
+                path: appsettings.Production.json
+      containers:
+        - name: games-worker
+          image: 399349187224.dkr.ecr.us-east-1.amazonaws.com/fcg-games-worker:latest
+          imagePullPolicy: Always
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: fcg-config
+                  key: ASPNETCORE_ENVIRONMENT
+            - name: ELASTIC_ENABLED
+              value: "true"
+            - name: ELASTIC_URL
+              value: "http://elasticsearch:9200"
+            - name: ELASTIC_INDEX_NAME
+              value: "games"
+            - name: OTEL_TRACES_SAMPLER
+              valueFrom:
+                configMapKeyRef:
+                  name: fcg-config
+                  key: OTEL_TRACES_SAMPLER
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://adot-collector.fcg.svc.cluster.local:4317
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: grpc
+            - name: OTEL_SERVICE_NAME
+              value: games-worker
+          volumeMounts:
+            - name: appsettings
+              mountPath: /app/appsettings.Production.json
+              subPath: appsettings.Production.json
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+      restartPolicy: Always
+
+

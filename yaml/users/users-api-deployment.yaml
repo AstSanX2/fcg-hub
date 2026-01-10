@@ -1,0 +1,107 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: users-api
+  namespace: fcg
+  labels:
+    app: users-api
+    app.kubernetes.io/name: users-api
+    app.kubernetes.io/part-of: fcg
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: users-api
+  template:
+    metadata:
+      labels:
+        app: users-api
+        app.kubernetes.io/name: users-api
+    spec:
+      serviceAccountName: users-api-sa
+      volumes:
+        - name: appsettings
+          secret:
+            secretName: users-appsettings
+            items:
+              - key: appsettings.Production.json
+                path: appsettings.Production.json
+      containers:
+        - name: users-api
+          image: 399349187224.dkr.ecr.us-east-1.amazonaws.com/fcg-users-api:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: fcg-config
+                  key: ASPNETCORE_ENVIRONMENT
+            - name: Logging__LogLevel__Microsoft.AspNetCore.Hosting.Diagnostics
+              value: Warning
+            - name: Logging__LogLevel__Microsoft.AspNetCore.Routing.EndpointMiddleware
+              value: Warning
+            - name: Logging__LogLevel__Microsoft.AspNetCore.Http.Result
+              value: Warning
+            - name: OTEL_TRACES_SAMPLER
+              valueFrom:
+                configMapKeyRef:
+                  name: fcg-config
+                  key: OTEL_TRACES_SAMPLER
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://adot-collector.fcg.svc.cluster.local:4317
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: grpc
+            - name: OTEL_SERVICE_NAME
+              value: users-api
+          volumeMounts:
+            - name: appsettings
+              mountPath: /app/appsettings.Production.json
+              subPath: appsettings.Production.json
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 300
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 300
+            timeoutSeconds: 3
+            failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: users-api-service
+  namespace: fcg
+  labels:
+    app: users-api
+    app.kubernetes.io/name: users-api
+    app.kubernetes.io/part-of: fcg
+spec:
+  type: LoadBalancer
+  selector:
+    app: users-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      nodePort: 31080
+      protocol: TCP
+
+

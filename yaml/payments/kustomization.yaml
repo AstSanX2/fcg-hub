@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: fcg
+
+resources:
+  - serviceaccounts.yaml
+  - payments-api-deployment.yaml
+  - payments-api-hpa.yaml
+  - payments-worker-deployment.yaml
+
+
